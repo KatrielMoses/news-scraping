@@ -44,18 +44,18 @@ def fetch_feed(url):
         return feedparser.parse(response.content)
     except Exception as e:
         print(f"[ERROR] Failed to fetch {url}: {e}")
-        return feedparser.parse('')  # return empty
+        return feedparser.parse('') 
 
 
 def parse_entries(feed, source, country):
     """Extract structured article data from feed entries."""
     articles = []
     for entry in feed.entries:
-        # Parse basic fields
+        
         title = entry.get('title', '').strip()
         link = entry.get('link', '').strip()
         published = entry.get('published', entry.get('updated', '')).strip()
-        # Convert published to ISO format
+        
         try:
             published_dt = datetime(*entry.published_parsed[:6])
             published = published_dt.isoformat()
@@ -80,7 +80,6 @@ def save_to_csv(data, filename='news_data.csv'):
 
 
 def save_to_json(data, filename='news_data.json'):
-    # Deduplicate by link
     unique = {item['link']: item for item in data}
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(list(unique.values()), f, ensure_ascii=False, indent=2)
@@ -89,7 +88,6 @@ def save_to_json(data, filename='news_data.json'):
 def save_to_sqlite(data, db_name='news.db'):
     conn = sqlite3.connect(db_name)
     c = conn.cursor()
-    # Create table if not exists
     c.execute('''
     CREATE TABLE IF NOT EXISTS articles (
         link TEXT PRIMARY KEY,
@@ -100,7 +98,6 @@ def save_to_sqlite(data, db_name='news.db'):
         summary TEXT
     )
     ''')
-    # Insert or ignore duplicates
     for item in data:
         c.execute('''INSERT OR IGNORE INTO articles
                      (link, source, country, title, published, summary)
@@ -118,9 +115,8 @@ def main():
         feed = fetch_feed(feed_meta['url'])
         entries = parse_entries(feed, feed_meta['source'], feed_meta['country'])
         all_articles.extend(entries)
-        time.sleep(1)  # Be kind to servers
+        time.sleep(1) 
 
-    # Save outputs
     save_to_csv(all_articles, 'news_data.csv')
     save_to_json(all_articles, 'news_data.json')
     save_to_sqlite(all_articles, 'news.db')
